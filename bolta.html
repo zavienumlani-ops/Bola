@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hindi Baat Karna - Mastery Path</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e5e7eb;
+            --primary-blue: #2563eb;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overscroll-behavior-y: none;
+            -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Themes */
+        body.theme-dark {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        body.theme-tiranga {
+            --bg-color: #fffaf0;
+            background-image: linear-gradient(to bottom, #FF9933 0%, #FFFFFF 50%, #138808 100%);
+            background-attachment: fixed;
+            --text-main: #000000;
+        }
+
+        .geo-background {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+            background-image: radial-gradient(#2563eb 0.5px, transparent 0.5px);
+            background-size: 24px 24px;
+        }
+
+        .btn-3d {
+            transition: all 0.1s;
+            border-bottom: 4px solid rgba(0,0,0,0.2);
+        }
+        .btn-3d:active:not(:disabled) {
+            transform: translateY(2px);
+            border-bottom-width: 0px;
+            margin-top: 4px;
+        }
+
+        .option-btn {
+            background-color: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-bottom-width: 4px;
+            color: var(--text-main);
+            transition: all 0.2s;
+        }
+        .option-btn.correct { border-color: #58cc02 !important; background-color: #d7ffb8 !important; color: #166534 !important; }
+        .option-btn.wrong { border-color: #ff4b4b !important; background-color: #ffdfe0 !important; color: #991b1b !important; }
+        .option-btn.selected { border-color: #2563eb !important; background-color: #dbeafe !important; }
+
+        .bottom-sheet { transform: translateY(100%); transition: transform 0.3s ease; }
+        .bottom-sheet.show { transform: translateY(0); }
+
+        .category-card {
+            border: 2px solid var(--border-color);
+            border-bottom-width: 4px;
+            background: var(--card-bg);
+        }
+
+        .lightning-card { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; }
+        .matching-card { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: white; }
+
+        .streak-active { color: #ff9600; text-shadow: 0 0 10px rgba(255,150,0,0.2); }
+
+        /* Custom Shop Text Styling */
+        .shop-title { color: #1e293b; }
+        .theme-dark .shop-title { color: #f1f5f9; }
+        .shop-desc { color: #64748b; }
+        .theme-dark .shop-desc { color: #cbd5e1; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <div class="geo-background"></div>
+
+    <!-- Header -->
+    <header class="bg-white dark:bg-slate-900 px-4 py-3 flex justify-between items-center border-b border-slate-200 z-10 shadow-sm" id="mainHeader">
+        <div class="flex items-center gap-4">
+            <button onclick="exitToHome()" id="backBtn" class="hidden text-slate-400 hover:text-slate-600 text-xl px-2">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="flex items-center gap-2">
+                <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center p-1">
+                    <i class="fas fa-language text-white"></i>
+                </div>
+                <h1 class="text-xl font-black text-blue-600 uppercase tracking-tighter">Bolo Hindi</h1>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-1 font-bold">
+                <i class="fas fa-fire text-slate-300 transition-colors" id="streakIcon"></i>
+                <span id="streakDisplay" class="text-slate-400">0</span>
+            </div>
+            <div class="flex items-center gap-1 text-yellow-500 font-bold bg-yellow-50 px-3 py-1 rounded-full border border-yellow-100">
+                <i class="fas fa-bolt"></i>
+                <span id="xpDisplay">0</span>
+            </div>
+            <button id="shopNavBtn" onclick="toggleShop()" class="text-slate-500 hover:text-blue-600 transition-colors w-8 h-8 flex items-center justify-center">
+                <i id="shopNavIcon" class="fas fa-shopping-cart text-lg"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Progress Bar (Visible during Quiz) -->
+    <div id="progressContainer" class="hidden px-6 pt-4 w-full max-w-2xl mx-auto z-10">
+        <div class="flex items-center gap-3">
+            <div class="h-3 bg-slate-200 flex-1 rounded-full overflow-hidden">
+                <div id="progressBar" class="h-full bg-green-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <span id="lessonStepDisplay" class="text-xs font-black text-slate-400">1/5</span>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-hidden relative w-full mx-auto flex flex-col">
+        
+        <!-- Home -->
+        <div id="learnView" class="flex-1 overflow-y-auto p-4 pb-24 max-w-3xl mx-auto w-full">
+            <div class="text-center py-6">
+                <h2 class="text-2xl font-black">Hindi Mastery</h2>
+                <p class="text-slate-500 font-bold">Complete 5 lessons to master each unit</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <button onclick="startLightningRound()" class="lightning-card p-5 rounded-2xl flex items-center justify-between shadow-lg btn-3d">
+                    <div class="flex items-center gap-4">
+                        <i class="fas fa-bolt text-2xl"></i>
+                        <div class="text-left"><h3 class="font-black">Lightning</h3><p class="text-xs opacity-80">Quick Quiz</p></div>
+                    </div>
+                </button>
+                <button onclick="startMatchingGame()" class="matching-card p-5 rounded-2xl flex items-center justify-between shadow-lg btn-3d">
+                    <div class="flex items-center gap-4">
+                        <i class="fas fa-clone text-2xl"></i>
+                        <div class="text-left"><h3 class="font-black">Matching</h3><p class="text-xs opacity-80">Connect words</p></div>
+                    </div>
+                </button>
+            </div>
+            
+            <div id="categoryGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+        </div>
+
+        <!-- Shop -->
+        <div id="shopView" class="hidden flex-1 overflow-y-auto p-4 max-w-2xl mx-auto w-full">
+            <h2 class="text-3xl font-black mb-6 shop-title">XP Store</h2>
+            <div class="space-y-4">
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border-2 border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="text-2xl">🚀</div>
+                        <div><h4 class="font-black shop-title">Double XP</h4><p class="text-xs shop-desc">10 Min Boost</p></div>
+                    </div>
+                    <button onclick="buyItem('boost', 150)" class="bg-blue-600 text-white font-black px-4 py-2 rounded-xl btn-3d">150 XP</button>
+                </div>
+
+                <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border-2 border-slate-100 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="text-2xl">🧊</div>
+                        <div>
+                            <h4 class="font-black shop-title">Streak Freeze</h4>
+                            <p class="text-xs shop-desc">Protect your streak for 1 day</p>
+                            <p id="freezeCount" class="text-[10px] font-bold text-blue-500 uppercase mt-1">Owned: 0</p>
+                        </div>
+                    </div>
+                    <button onclick="buyItem('freeze', 200)" class="bg-blue-600 text-white font-black px-4 py-2 rounded-xl btn-3d">200 XP</button>
+                </div>
+                
+                <h3 class="font-black text-xl mt-8 shop-title">Themes</h3>
+                <div id="themeList" class="grid gap-3"></div>
+            </div>
+        </div>
+
+        <!-- Quiz/Matching View -->
+        <div id="quizView" class="hidden flex-1 flex flex-col max-w-2xl mx-auto w-full p-4 overflow-y-auto z-10">
+            <div class="flex-1 flex flex-col justify-center items-center text-center w-full" id="questionArea"></div>
+        </div>
+    </main>
+
+    <!-- Feedback Sheet -->
+    <div id="feedbackSheet" class="bottom-sheet fixed bottom-0 left-0 right-0 p-6 z-50 border-t-2 bg-white">
+        <div class="max-w-2xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4 w-full">
+                <div id="feedbackIcon" class="w-12 h-12 rounded-full flex items-center justify-center p-2 flex-none"></div>
+                <div><h3 id="feedbackTitle" class="text-lg font-black"></h3><p id="feedbackSubtitle" class="text-sm font-bold opacity-80"></p></div>
+            </div>
+            <button onclick="handleContinue()" id="continueBtn" class="w-full sm:w-auto px-10 py-3 rounded-xl font-black text-white btn-3d uppercase">Continue</button>
+        </div>
+    </div>
+
+    <!-- Complete Modal -->
+    <div id="completeModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full text-center shadow-2xl">
+            <div id="modalEmoji" class="text-6xl mb-4">⭐</div>
+            <h2 id="modalTitle" class="text-3xl font-black text-slate-800 mb-2">Lesson Complete!</h2>
+            <p id="modalLessonProgress" class="text-lg font-bold text-slate-500 mb-2">Lesson 1 of 5</p>
+            <p id="modalXP" class="text-xl font-black text-blue-600 mb-6">+20 XP Earned</p>
+            <button onclick="closeCompleteModal()" class="w-full bg-green-500 text-white font-black py-4 rounded-xl btn-3d uppercase">Return Home</button>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'BoloHindi_Global_Save_v7_Lessons';
+        
+        const vocabBank = {
+            "Greetings": [
+                { speech: "Namaste", english: "Hello" }, { speech: "Dhanyavaad", english: "Thank you" },
+                { speech: "Kaise hain?", english: "How are you?" }, { speech: "Suprabhaat", english: "Good morning" },
+                { speech: "Shubh raatri", english: "Good night" }, { speech: "Ji haan", english: "Yes" },
+                { speech: "Ji nahi", english: "No" }, { speech: "Alvida", english: "Goodbye" }
+            ],
+            "Colors": [
+                { speech: "Laal", english: "Red" }, { speech: "Neela", english: "Blue" },
+                { speech: "Hara", english: "Green" }, { speech: "Peela", english: "Yellow" },
+                { speech: "Safed", english: "White" }, { speech: "Kaala", english: "Black" }
+            ],
+            "Numbers": [
+                { speech: "Ek", english: "One" }, { speech: "Do", english: "Two" },
+                { speech: "Teen", english: "Three" }, { speech: "Chaar", english: "Four" },
+                { speech: "Paanch", english: "Five" }, { speech: "Chhah", english: "Six" }
+            ],
+            "Family": [
+                { speech: "Maa", english: "Mother" }, { speech: "Pita", english: "Father" },
+                { speech: "Bhai", english: "Brother" }, { speech: "Behen", english: "Sister" },
+                { speech: "Dada", english: "Grandfather" }, { speech: "Dadi", english: "Grandmother" }
+            ],
+            "Animals": [],
+            "Travel": [],
+            "Food": []
+        };
+
+        const themes = [
+            { id: 'default', name: 'Standard', cost: 0, emoji: '🏠' },
+            { id: 'dark', name: 'Dark Mode', cost: 500, emoji: '🌙' },
+            { id: 'tiranga', name: 'Tiranga', cost: 1000, emoji: '🇮🇳' }
+        ];
+
+        let state = {
+            xp: 0, streak: 0, unlocked: 1, activeTheme: 'default',
+            unitProgress: { "Greetings": 0, "Colors": 0, "Numbers": 0, "Family": 0, "Animals": 0, "Travel": 0, "Food": 0 },
+            inventory: { freeze: 0, boost: 0, themes: ['default'] },
+            currentSession: [], currentIndex: 0, activeUnit: null
+        };
+
+        function save() {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+            updateUI();
+        }
+
+        function load() {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY));
+            if (data) Object.assign(state, data);
+            applyTheme(state.activeTheme);
+            updateUI();
+        }
+
+        function applyTheme(id) {
+            document.body.className = id === 'default' ? '' : `theme-${id}`;
+            state.activeTheme = id;
+            save();
+        }
+
+        function updateUI() {
+            document.getElementById('xpDisplay').innerText = state.xp;
+            document.getElementById('streakDisplay').innerText = state.streak;
+            document.getElementById('streakIcon').className = state.streak > 0 ? 'fas fa-fire streak-active' : 'fas fa-fire text-slate-300';
+            document.getElementById('freezeCount').innerText = `Owned: ${state.inventory.freeze || 0}`;
+            renderThemeList();
+        }
+
+        function toggleShop() {
+            const shop = document.getElementById('shopView');
+            const learn = document.getElementById('learnView');
+            const icon = document.getElementById('shopNavIcon');
+            const isShop = shop.classList.contains('hidden');
+            shop.classList.toggle('hidden', !isShop);
+            learn.classList.toggle('hidden', isShop);
+            icon.className = isShop ? 'fas fa-home text-lg' : 'fas fa-shopping-cart text-lg';
+        }
+
+        function buyItem(type, cost) {
+            if (state.xp >= cost) {
+                state.xp -= cost;
+                state.inventory[type] = (state.inventory[type] || 0) + 1;
+                save();
+            } else {
+                alert("Not enough XP!");
+            }
+        }
+
+        function buyTheme(id, cost) {
+            if (state.inventory.themes.includes(id)) {
+                applyTheme(id);
+                return;
+            }
+            if (state.xp >= cost) {
+                state.xp -= cost;
+                state.inventory.themes.push(id);
+                applyTheme(id);
+            } else {
+                alert("Not enough XP!");
+            }
+        }
+
+        function renderThemeList() {
+            const list = document.getElementById('themeList');
+            list.innerHTML = themes.map(t => {
+                const owned = state.inventory.themes.includes(t.id);
+                const active = state.activeTheme === t.id;
+                return `
+                    <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border-2 ${active ? 'border-blue-500' : 'border-slate-100'} flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="text-2xl">${t.emoji}</div>
+                            <h4 class="font-black shop-title">${t.name}</h4>
+                        </div>
+                        <button onclick="buyTheme('${t.id}', ${t.cost})" class="${owned ? 'bg-slate-100 text-slate-600' : 'bg-blue-600 text-white'} font-black px-4 py-2 rounded-xl btn-3d">
+                            ${owned ? (active ? 'Active' : 'Equip') : t.cost + ' XP'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderDashboard() {
+            const grid = document.getElementById('categoryGrid');
+            const keys = Object.keys(vocabBank);
+            
+            grid.innerHTML = keys.map((theme, i) => {
+                const progress = state.unitProgress[theme] || 0;
+                const locked = (i > 0 && (state.unitProgress[keys[i-1]] < 5));
+                const isComingSoon = vocabBank[theme].length === 0;
+                const percent = (progress / 5) * 100;
+
+                return `
+                    <div onclick="${(locked || isComingSoon) ? '' : `startUnitLesson('${theme}')`}" 
+                         class="category-card p-6 rounded-3xl flex flex-col gap-4 shadow-sm ${(locked || isComingSoon) ? 'opacity-50' : 'cursor-pointer hover:border-blue-400 btn-3d'}">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600 text-xl">
+                                <i class="fas ${locked ? 'fa-lock' : (isComingSoon ? 'fa-clock' : 'fa-graduation-cap')}"></i>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-[10px] font-black opacity-50 uppercase leading-none mb-1">Unit ${i+1}</h4>
+                                <p class="font-black text-lg leading-none">${theme}</p>
+                            </div>
+                        </div>
+                        
+                        ${!locked && !isComingSoon ? `
+                        <div class="space-y-1">
+                            <div class="flex justify-between text-[10px] font-black uppercase">
+                                <span class="text-slate-400">Lesson ${progress}/5</span>
+                                <span class="${progress === 5 ? 'text-green-500' : 'text-blue-500'}">${progress === 5 ? 'Mastered' : 'In Progress'}</span>
+                            </div>
+                            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                                <div class="h-full bg-blue-500 rounded-full" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                        ` : (isComingSoon ? '<span class="text-[10px] font-black text-blue-400 uppercase">Coming Soon</span>' : '<span class="text-[10px] font-black text-slate-300 uppercase">Unlock Unit ${i} First</span>')}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function startUnitLesson(theme) {
+            if (state.unitProgress[theme] >= 5) {
+                // Already mastered, but can still practice
+            }
+            state.activeMode = 'standard';
+            state.activeUnit = theme;
+            // Pull a set of 5 questions for this lesson
+            state.currentSession = [...vocabBank[theme]].sort(() => 0.5 - Math.random()).slice(0, 5);
+            state.currentIndex = 0;
+            setupQuizUI();
+            renderQuestion();
+        }
+
+        function startLightningRound() {
+            state.activeMode = 'lightning';
+            state.activeUnit = null;
+            const all = Object.values(vocabBank).flat().filter(item => item.speech);
+            state.currentSession = all.sort(() => 0.5 - Math.random()).slice(0, 10);
+            state.currentIndex = 0;
+            setupQuizUI();
+            renderQuestion();
+        }
+
+        function startMatchingGame() {
+            state.activeMode = 'matching';
+            state.activeUnit = null;
+            const all = Object.values(vocabBank).flat().filter(item => item.speech);
+            const sample = all.sort(() => 0.5 - Math.random()).slice(0, 5);
+            const hindiCards = sample.map(p => ({ text: p.speech, match: p.english, type: 'hindi' }));
+            const englishCards = sample.map(p => ({ text: p.english, match: p.speech, type: 'english' }));
+            state.matchingPairs = [...hindiCards, ...englishCards].sort(() => 0.5 - Math.random());
+            state.correctMatches = 0;
+            state.selectedMatch = null;
+            setupQuizUI();
+            renderMatching();
+        }
+
+        function setupQuizUI() {
+            document.getElementById('learnView').classList.add('hidden');
+            document.getElementById('shopView').classList.add('hidden');
+            document.getElementById('quizView').classList.remove('hidden');
+            document.getElementById('backBtn').classList.remove('hidden');
+            document.getElementById('shopNavBtn').classList.add('hidden');
+            document.getElementById('progressContainer').classList.toggle('hidden', state.activeMode === 'matching');
+            document.getElementById('lessonStepDisplay').innerText = state.activeUnit ? `Lesson ${state.unitProgress[state.activeUnit]+1}/5` : 'Goal';
+        }
+
+        function renderQuestion() {
+            const q = state.currentSession[state.currentIndex];
+            const progress = (state.currentIndex / state.currentSession.length) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+
+            let opts = [q.english];
+            const distractors = ["Car", "Water", "House", "Tree", "Bread", "Sky", "Run", "Eat", "Book", "Small", "Fast", "Green"];
+            while(opts.length < 4) {
+                let d = distractors[Math.floor(Math.random()*distractors.length)];
+                if(!opts.includes(d)) opts.push(d);
+            }
+            opts.sort(() => 0.5 - Math.random());
+
+            document.getElementById('questionArea').innerHTML = `
+                <div class="mb-10">
+                    <p class="text-slate-400 font-black uppercase text-xs mb-2">Translate this word</p>
+                    <h2 class="text-5xl font-black">${q.speech}</h2>
+                </div>
+                <div class="grid gap-3 w-full max-w-sm">
+                    ${opts.map(o => `<button onclick="checkAnswer(this, '${o}', '${q.english}')" class="option-btn p-5 rounded-2xl font-bold text-lg">${o}</button>`).join('')}
+                </div>
+            `;
+        }
+
+        function checkAnswer(btn, selected, correct) {
+            const isCorrect = selected === correct;
+            btn.classList.add(isCorrect ? 'correct' : 'wrong');
+            const sheet = document.getElementById('feedbackSheet');
+            sheet.className = `bottom-sheet fixed bottom-0 left-0 right-0 p-6 z-50 border-t-2 show ${isCorrect ? 'bg-green-100' : 'bg-red-100'}`;
+            document.getElementById('feedbackTitle').innerText = isCorrect ? "Awesome!" : "Not Quite";
+            document.getElementById('feedbackSubtitle').innerText = isCorrect ? "" : `The correct answer is: ${correct}`;
+            document.getElementById('feedbackIcon').innerHTML = `<i class="fas ${isCorrect ? 'fa-check-circle text-green-600' : 'fa-times-circle text-red-600'} text-3xl"></i>`;
+            document.getElementById('continueBtn').className = `w-full sm:w-auto px-10 py-3 rounded-xl font-black text-white btn-3d ${isCorrect ? 'bg-green-500' : 'bg-red-500'}`;
+        }
+
+        function handleContinue() {
+            document.getElementById('feedbackSheet').classList.remove('show');
+            state.currentIndex++;
+            if (state.currentIndex >= state.currentSession.length) finishLesson();
+            else renderQuestion();
+        }
+
+        function finishLesson() {
+            let xpEarned = state.activeMode === 'matching' ? 25 : 20;
+            state.xp += xpEarned;
+            state.streak++;
+            
+            if (state.activeUnit) {
+                if (state.unitProgress[state.activeUnit] < 5) {
+                    state.unitProgress[state.activeUnit]++;
+                }
+                document.getElementById('modalLessonProgress').innerText = `Lesson ${state.unitProgress[state.activeUnit]} of 5`;
+            } else {
+                document.getElementById('modalLessonProgress').innerText = "Special Practice";
+            }
+
+            save();
+            document.getElementById('modalXP').innerText = `+${xpEarned} XP Earned`;
+            document.getElementById('completeModal').classList.remove('hidden');
+        }
+
+        function renderMatching() {
+            document.getElementById('questionArea').innerHTML = `
+                <h2 class="text-2xl font-black mb-6">Match the Pairs</h2>
+                <div class="grid grid-cols-2 gap-3 w-full max-w-md">
+                    ${state.matchingPairs.map((card, i) => `
+                        <button id="card-${i}" onclick="handleMatchSelect(${i})" class="option-btn p-4 rounded-xl font-bold min-h-[70px] flex items-center justify-center">
+                            ${card.text}
+                        </button>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function handleMatchSelect(idx) {
+            const card = state.matchingPairs[idx];
+            const btn = document.getElementById(`card-${idx}`);
+            if (btn.classList.contains('correct')) return;
+
+            if (!state.selectedMatch) {
+                state.selectedMatch = { idx, card };
+                btn.classList.add('selected');
+            } else {
+                const first = state.selectedMatch;
+                const secondBtn = document.getElementById(`card-${idx}`);
+                
+                if (first.idx === idx) {
+                    btn.classList.remove('selected');
+                    state.selectedMatch = null;
+                    return;
+                }
+
+                if (first.card.type !== card.type && (first.card.match === card.text)) {
+                    document.getElementById(`card-${first.idx}`).className = 'option-btn p-4 rounded-xl font-bold min-h-[70px] correct cursor-default';
+                    secondBtn.className = 'option-btn p-4 rounded-xl font-bold min-h-[70px] correct cursor-default';
+                    state.correctMatches++;
+                    if (state.correctMatches === 5) finishLesson();
+                } else {
+                    secondBtn.classList.add('wrong');
+                    setTimeout(() => {
+                        document.getElementById(`card-${first.idx}`).classList.remove('selected');
+                        secondBtn.classList.remove('wrong');
+                    }, 500);
+                }
+                state.selectedMatch = null;
+            }
+        }
+
+        function exitToHome() {
+            document.getElementById('quizView').classList.add('hidden');
+            document.getElementById('learnView').classList.remove('hidden');
+            document.getElementById('backBtn').classList.add('hidden');
+            document.getElementById('shopNavBtn').classList.remove('hidden');
+            document.getElementById('progressContainer').classList.add('hidden');
+            renderDashboard();
+        }
+
+        function closeCompleteModal() {
+            document.getElementById('completeModal').classList.add('hidden');
+            exitToHome();
+        }
+
+        window.onload = () => { load(); renderDashboard(); };
+    </script>
+</body>
+</html>
